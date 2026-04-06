@@ -18,6 +18,7 @@
             float4 _MainTex_ST;
             
             float3 _PainterPosition;
+            float2 _PainterUV;
             float _Radius;
             float _Hardness;
             float _Strength;
@@ -40,6 +41,12 @@
                 return 1 - smoothstep(radius * hardness, radius, m);    
             }
 
+            float maskUV(float2 uv, float2 center, float radius, float hardness)
+            {
+                float dist = distance(uv, center);
+                return 1.0 - smoothstep(radius * hardness, radius, dist);
+            }
+
             v2f vert (appdata v){
                 v2f o;
 				o.worldPos = mul(unity_ObjectToWorld, v.vertex);
@@ -56,7 +63,8 @@
                 }         
 
                 float4 col = tex2D(_MainTex, i.uv);
-                float f = mask(i.worldPos, _PainterPosition, _Radius, _Hardness);
+                float f = maskUV(i.uv, _PainterUV, _Radius, _Hardness);
+                //float f = mask(i.worldPos, _PainterPosition, _Radius, _Hardness);
                 float edge = f * _Strength;
                 return lerp(col, _PainterColor, edge);
             }
