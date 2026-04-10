@@ -13,6 +13,9 @@ public class ParticlesController: MonoBehaviour{
     ParticleSystem part;
     List<ParticleCollisionEvent> collisionEvents;
 
+    [Header("UV Raycast")]
+    [SerializeField] private float rayOffset = 0.03f;
+    [SerializeField] private float rayDistance = 0.1f;
     void Start(){
         part = GetComponent<ParticleSystem>();
         collisionEvents = new List<ParticleCollisionEvent>();
@@ -24,12 +27,58 @@ public class ParticlesController: MonoBehaviour{
     void OnParticleCollision(GameObject other) {
         int numCollisionEvents = part.GetCollisionEvents(other, collisionEvents);
 
+        EnemyMovement enemy = other.GetComponent<EnemyMovement>();
+        if (enemy != null)
+        {
+            for (int i = 0; i < numCollisionEvents; i++)
+            {
+                ParticleCollisionEvent ev = collisionEvents[i];
+                Vector3 incoming = ev.velocity.normalized;
+                incoming += new Vector3(0, 0.5f, 0); 
+                enemy.PushbackSelf(incoming);
+            }
+        }
+
         Paintable p = other.GetComponent<Paintable>();
-        if(p != null){
-            for  (int i = 0; i< numCollisionEvents; i++){
-                Vector3 pos = collisionEvents[i].intersection;
-                float radius = Random.Range(minRadius, maxRadius);
-                PaintManager.instance.paint(p, pos, radius, hardness, strength, paintColor);
+        if(p != null)
+        {
+            MeshCollider meshCollider = other.GetComponent<MeshCollider>();
+            if (meshCollider == null)
+            {
+                Debug.LogWarning($"[ParticlesController] {other.name} needs a MeshCollider for UV painting.");
+                return;
+            }
+
+            for (int i = 0; i < numCollisionEvents; i++)
+            {
+
+                ParticleCollisionEvent ev = collisionEvents[i];
+
+                Vector3 hitPoint = ev.intersection;
+
+                // Use incoming particle direction, then ray back into the surface
+                Vector3 incoming = ev.velocity.normalized;
+                Vector3 rayDir = incoming;
+
+                // start a bit before the contact point
+                Vector3 origin = hitPoint - rayDir * rayOffset;
+
+                if (meshCollider.Raycast(new Ray(origin, rayDir), out RaycastHit hit, rayDistance))
+                {
+                    Vector2 uv = hit.textureCoord;
+                    float radius = Random.Range(minRadius, maxRadius);
+
+                    Debug.Log($"HIT UV: {uv}");
+
+                    PaintManager.instance.paint(p, uv, radius, hardness, strength, paintColor);
+                }
+                else
+                {
+                    Debug.LogWarning($"Raycast failed. hitPoint={hitPoint}, vel={ev.velocity}, normal={ev.normal}");
+                }
+                    //Vector3 pos = collisionEvents[i].intersection;
+                    //float radius = Random.Range(minRadius, maxRadius);
+                    //PaintManager.instance.paint(p, pos, radius, hardness, strength, paintColor);
             }
         }
     }

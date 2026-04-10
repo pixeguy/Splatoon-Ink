@@ -1,69 +1,85 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using Cinemachine;
 
 public class ShootingSystem : MonoBehaviour
 {
+    private CameraViewer input;
 
-    MovementInput input;
+    [SerializeField] private ParticleSystem inkParticle;
+    [SerializeField] private Transform parentController;
+    [SerializeField] private Transform splatGunNozzle;
+    [SerializeField] private CinemachineImpulseSource impulseSource;
 
-    [SerializeField] ParticleSystem inkParticle;
-    [SerializeField] Transform parentController;
-    [SerializeField] Transform splatGunNozzle;
-    [SerializeField] CinemachineFreeLook freeLookCamera;
-    CinemachineImpulseSource impulseSource;
+    [Header("Aim Pitch")]
+    [SerializeField] private float visualPitchMultiplier = 0.35f;
+    [SerializeField] private float visualPitchSmooth = 0.3f;
+    [SerializeField] private float minVisualPitch = -25f;
+    [SerializeField] private float maxVisualPitch = 25f;
 
-    void Start()
+    private void Start()
     {
-        input = GetComponent<MovementInput>();
-        impulseSource = freeLookCamera.GetComponent<CinemachineImpulseSource>();
+        input = GetComponent<CameraViewer>();
+
+        if (impulseSource == null)
+            impulseSource = GetComponentInChildren<CinemachineImpulseSource>();
     }
 
-    void Update()
+    private void Update()
     {
-        Vector3 angle = parentController.localEulerAngles;
-        input.blockRotationPlayer = Input.GetMouseButton(0);
         bool pressing = Input.GetMouseButton(0);
 
-        if (Input.GetMouseButton(0))
-        {
+        if (pressing)
             VisualPolish();
-            input.RotateToCamera(transform);
-        }
 
         if (Input.GetMouseButtonDown(0))
             inkParticle.Play();
         else if (Input.GetMouseButtonUp(0))
             inkParticle.Stop();
 
-        parentController.localEulerAngles
-            = new Vector3(Mathf.LerpAngle(parentController.localEulerAngles.x, pressing ? RemapCamera(freeLookCamera.m_YAxis.Value, 0, 1, -25, 25) : 0, .3f), angle.y, angle.z);
+        UpdateAimVisual();
     }
 
-    void VisualPolish()
+    private void UpdateAimVisual()
+    {
+        Vector3 angle = parentController.localEulerAngles;
+
+        float targetPitch = Mathf.Clamp(
+            input.GetPitch() * visualPitchMultiplier,
+            minVisualPitch,
+            maxVisualPitch
+        );
+
+        float newX = Mathf.LerpAngle(
+            parentController.localEulerAngles.x,
+            targetPitch,
+            visualPitchSmooth
+        );
+
+        parentController.localEulerAngles = new Vector3(newX, angle.y, angle.z);
+    }
+
+    private void VisualPolish()
     {
         if (!DOTween.IsTweening(parentController))
         {
             parentController.DOComplete();
-            Vector3 forward = -parentController.forward;
-            Vector3 localPos = parentController.localPosition;
-            parentController.DOLocalMove(localPos - new Vector3(0, 0, .2f), .03f)
-                .OnComplete(() => parentController.DOLocalMove(localPos, .1f).SetEase(Ease.OutSine));
 
-           impulseSource.GenerateImpulse();
+            Vector3 localPos = parentController.localPosition;
+
+            parentController.DOLocalMove(localPos - new Vector3(0, 0, 0.2f), 0.03f)
+                .OnComplete(() =>
+                    parentController.DOLocalMove(localPos, 0.1f).SetEase(Ease.OutSine)
+                );
+
+            if (impulseSource != null)
+                impulseSource.GenerateImpulse();
         }
 
         if (!DOTween.IsTweening(splatGunNozzle))
         {
             splatGunNozzle.DOComplete();
-            splatGunNozzle.DOPunchScale(new Vector3(0, 1, 1) / 1.5f, .15f, 10, 1);
+            splatGunNozzle.DOPunchScale(new Vector3(0, 1, 1) / 1.5f, 0.15f, 10, 1);
         }
-    }
-
-    float RemapCamera(float value, float from1, float to1, float from2, float to2)
-    {
-        return (value - from1) / (to1 - from1) * (to2 - from2) + from2;
     }
 }

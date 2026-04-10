@@ -1,129 +1,111 @@
-
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
-//This script requires you to have setup your animator with 3 parameters, "InputMagnitude", "InputX", "InputZ"
-//With a blend tree to control the inputmagnitude and allow blending between animations.
 [RequireComponent(typeof(CharacterController))]
-public class MovementInput : MonoBehaviour {
+public class MovementInput : MonoBehaviour
+{
+    [Header("Movement")]
+    public float moveSpeed = 5f;
+    public float gravity = 20f;
 
-    public float Velocity;
-    [Space]
+    [Header("Mouse Look")]
+    public Camera playerCamera;
+    public float mouseSensitivity = 2f;
+    public float minPitch = -80f;
+    public float maxPitch = 80f;
 
-	private Animator anim;
-	private Camera cam;
-	private CharacterController controller;
-	private bool isGrounded;
-	private Vector3 desiredMoveDirection;
-	private float InputX;
-	private float InputZ;
+    [Header("Animation")]
+    public float allowPlayerMovement = 0.1f;
+    [Range(0, 1f)] public float StartAnimTime = 0.3f;
+    [Range(0, 1f)] public float StopAnimTime = 0.15f;
 
-	public bool blockRotationPlayer;
-	public float desiredRotationSpeed = 0.1f;
+    private Animator anim;
+    private CharacterController controller;
 
-	public float Speed;
-	public float allowPlayerRotation = 0.1f;
+    private float inputX;
+    private float inputZ;
+    private float verticalVel;
+    public float cameraPitch;
 
+    private void Start()
+    {
+        anim = GetComponent<Animator>();
+        controller = GetComponent<CharacterController>();
 
-    [Header("Animation Smoothing")]
-    [Range(0, 1f)]
-    public float HorizontalAnimSmoothTime = 0.2f;
-    [Range(0, 1f)]
-    public float VerticalAnimTime = 0.2f;
-    [Range(0,1f)]
-    public float StartAnimTime = 0.3f;
-    [Range(0, 1f)]
-    public float StopAnimTime = 0.15f;
+        if (playerCamera == null)
+            playerCamera = Camera.main;
 
-    public float verticalVel;
-    private Vector3 moveVector;
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
 
-	void Start () {
-		anim = this.GetComponent<Animator> ();
-		cam = Camera.main;
-		controller = this.GetComponent<CharacterController> ();
-	}
-	
-	void Update () {
+    private void Update()
+    {
+        HandleMouseLook();
+        HandleMovement();
+        HandleAnimation();
+    }
 
-		InputMagnitude ();
+    private void HandleMouseLook()
+    {
+        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
-        isGrounded = controller.isGrounded;
-        if (isGrounded)
-            verticalVel -= 0;
+        // Yaw = rotate player body left/right
+        transform.Rotate(Vector3.up * mouseX);
+
+        // Pitch = rotate camera up/down
+        cameraPitch -= mouseY;
+        cameraPitch = Mathf.Clamp(cameraPitch, minPitch, maxPitch);
+
+        if (playerCamera != null)
+        {
+            playerCamera.transform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
+        }
+    }
+
+    private void HandleMovement()
+    {
+        inputX = Input.GetAxis("Horizontal");
+        inputZ = Input.GetAxis("Vertical");
+
+        Vector3 move = (transform.right * inputX + transform.forward * inputZ).normalized;
+
+        if (controller.isGrounded)
+        {
+            verticalVel = -1f;
+        }
         else
-            verticalVel -= 1;
+        {
+            verticalVel -= gravity * Time.deltaTime;
+        }
 
-        moveVector = new Vector3(0, verticalVel * .2f * Time.deltaTime, 0);
-        controller.Move(moveVector);
+        Vector3 finalMove = move * moveSpeed;
+        finalMove.y = verticalVel;
+
+        controller.Move(finalMove * Time.deltaTime);
     }
 
-	void PlayerMoveAndRotation() {
-		InputX = Input.GetAxis("Horizontal");
-		InputZ = Input.GetAxis("Vertical");
-
-		var camera = Camera.main;
-		var forward = cam.transform.forward;
-		var right = cam.transform.right;
-
-		forward.y = 0f;
-		right.y = 0f;
-
-		forward.Normalize();
-		right.Normalize();
-
-		desiredMoveDirection = forward * InputZ + right * InputX;
-
-		if (blockRotationPlayer == false) {
-			//Camera
-			transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(desiredMoveDirection), desiredRotationSpeed);
-			controller.Move(desiredMoveDirection * Time.deltaTime * Velocity);
-		}
-		else
-		{
-			//Strafe
-			controller.Move((transform.forward * InputZ + transform.right  * InputX) * Time.deltaTime * Velocity);
-		}
-	}
-
-    public void LookAt(Vector3 pos)
+    private void HandleAnimation()
     {
-        transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(pos), desiredRotationSpeed);
+        float speed = new Vector2(inputX, inputZ).sqrMagnitude;
+
+        if (anim == null)
+            return;
+
+        // Optional if you still use this bool
+        anim.SetBool("shooting", false);
+
+        if (speed > allowPlayerMovement)
+        {
+            anim.SetFloat("Blend", speed, StartAnimTime, Time.deltaTime);
+            anim.SetFloat("X", inputX, StartAnimTime / 3f, Time.deltaTime);
+            anim.SetFloat("Y", inputZ, StartAnimTime / 3f, Time.deltaTime);
+        }
+        else
+        {
+            anim.SetFloat("Blend", speed, StopAnimTime, Time.deltaTime);
+            anim.SetFloat("X", inputX, StopAnimTime / 3f, Time.deltaTime);
+            anim.SetFloat("Y", inputZ, StopAnimTime / 3f, Time.deltaTime);
+        }
     }
-
-    public void RotateToCamera(Transform t)
-    {
-        var forward = cam.transform.forward;
-
-        desiredMoveDirection = forward;
-		Quaternion lookAtRotation = Quaternion.LookRotation(desiredMoveDirection);
-		Quaternion lookAtRotationOnly_Y = Quaternion.Euler(transform.rotation.eulerAngles.x, lookAtRotation.eulerAngles.y, transform.rotation.eulerAngles.z);
-
-		t.rotation = Quaternion.Slerp(transform.rotation, lookAtRotationOnly_Y, desiredRotationSpeed);
-	}
-
-	void InputMagnitude() {
-		//Calculate Input Vectors
-		InputX = Input.GetAxis ("Horizontal");
-		InputZ = Input.GetAxis ("Vertical");
-
-		//Calculate the Input Magnitude
-		Speed = new Vector2(InputX, InputZ).sqrMagnitude;
-
-		//Change animation mode if rotation is blocked
-		anim.SetBool("shooting", blockRotationPlayer);
-
-		//Physically move player
-		if (Speed > allowPlayerRotation) {
-			anim.SetFloat ("Blend", Speed, StartAnimTime, Time.deltaTime);
-			anim.SetFloat("X", InputX, StartAnimTime/3, Time.deltaTime);
-			anim.SetFloat("Y", InputZ, StartAnimTime/3, Time.deltaTime);
-			PlayerMoveAndRotation ();
-		} else if (Speed < allowPlayerRotation) {
-			anim.SetFloat ("Blend", Speed, StopAnimTime, Time.deltaTime);
-			anim.SetFloat("X", InputX, StopAnimTime/ 3, Time.deltaTime);
-			anim.SetFloat("Y", InputZ, StopAnimTime/ 3, Time.deltaTime);
-		}
-	}
 }
