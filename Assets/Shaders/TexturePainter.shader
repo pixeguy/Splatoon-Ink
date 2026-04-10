@@ -25,6 +25,9 @@
             float4 _PainterColor;
             float _PrepareUV;
 
+            sampler2D _OriginalTex;
+            float _UseOriginal; // 0 = paint, 1 = restore
+
             struct appdata{
                 float4 vertex : POSITION;
 				float2 uv : TEXCOORD0;
@@ -58,11 +61,24 @@
             }
 
             fixed4 frag (v2f i) : SV_Target{   
+
+                float4 col; 
+
                 if(_PrepareUV > 0 ){
                     return float4(0, 0, 1, 1);
                 }         
 
-                float4 col = tex2D(_MainTex, i.uv);
+                float4 original = tex2D(_OriginalTex, i.uv);
+
+                if (_UseOriginal > 0.5)
+                {
+                    col = original;
+                }
+                else{
+
+                    col = tex2D(_MainTex, i.uv);
+                }
+
                 float f = maskUV(i.uv, _PainterUV, _Radius, _Hardness);
                 //float f = mask(i.worldPos, _PainterPosition, _Radius, _Hardness);
                 float edge = f * _Strength;
