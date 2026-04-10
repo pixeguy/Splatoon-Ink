@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 
-public class PaintManager : Singleton<PaintManager>{
+public class PaintManager : Singleton<PaintManager>
+{
 
     public Shader texturePaint;
     public Shader extendIslands;
@@ -22,16 +23,18 @@ public class PaintManager : Singleton<PaintManager>{
 
     CommandBuffer command;
 
-    public override void Awake(){
+    public override void Awake()
+    {
         base.Awake();
-        
+
         paintMaterial = new Material(texturePaint);
         extendMaterial = new Material(extendIslands);
         command = new CommandBuffer();
         command.name = "CommmandBuffer - " + gameObject.name;
     }
 
-    public void initTextures(Paintable paintable){
+    public void initTextures(Paintable paintable)
+    {
         RenderTexture mask = paintable.getMask();
         RenderTexture uvIslands = paintable.getUVIslands();
         RenderTexture extend = paintable.getExtend();
@@ -51,7 +54,8 @@ public class PaintManager : Singleton<PaintManager>{
     }
 
 
-    public void paint(Paintable paintable, Vector2 pos, float radius = 1f, float hardness = .5f, float strength = .5f, Color? color = null){
+    public void paint(Paintable paintable, Vector2 pos, float radius = 1f, float hardness = .5f, float strength = .5f, Color? color = null)
+    {
         RenderTexture mask = paintable.getMask();
         RenderTexture uvIslands = paintable.getUVIslands();
         RenderTexture extend = paintable.getExtend();
@@ -69,6 +73,8 @@ public class PaintManager : Singleton<PaintManager>{
         extendMaterial.SetFloat(uvOffsetID, paintable.extendsIslandOffset);
         extendMaterial.SetTexture(uvIslandsID, uvIslands);
 
+        paintMaterial.SetFloat("_UseOriginal", 0);
+
         command.SetRenderTarget(mask);
         command.DrawRenderer(rend, paintMaterial, 0);
 
@@ -82,4 +88,41 @@ public class PaintManager : Singleton<PaintManager>{
         command.Clear();
     }
 
+    public void Erase(Paintable paintable, Vector2 pos, float radius = 1f, float hardness = .5f, float strength = .5f)
+    {
+        RenderTexture mask = paintable.getMask();
+        RenderTexture uvIslands = paintable.getUVIslands();
+        RenderTexture extend = paintable.getExtend();
+        RenderTexture support = paintable.getSupport();
+        RenderTexture original = paintable.getOriginal();
+        Renderer rend = paintable.getRenderer();
+
+        paintMaterial.SetFloat(prepareUVID, 0);
+        paintMaterial.SetVector("_PainterUV", pos);
+
+        paintMaterial.SetFloat(hardnessID, hardness);
+        paintMaterial.SetFloat(strengthID, strength);
+        paintMaterial.SetFloat(radiusID, radius);
+
+        paintMaterial.SetTexture(textureID, support);
+
+        paintMaterial.SetFloat(blendOpID, 1);
+
+        paintMaterial.SetColor(colorID, Color.black);
+
+        paintMaterial.SetTexture("_OriginalTex", original);
+        paintMaterial.SetFloat("_UseOriginal", 1);
+
+        command.SetRenderTarget(mask);
+        command.DrawRenderer(rend, paintMaterial, 0);
+
+        command.SetRenderTarget(support);
+        command.Blit(mask, support);
+
+        command.SetRenderTarget(extend);
+        command.Blit(mask, extend, extendMaterial);
+
+        Graphics.ExecuteCommandBuffer(command);
+        command.Clear();
+    }
 }
