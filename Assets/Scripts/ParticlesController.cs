@@ -45,7 +45,6 @@ public class ParticlesController: MonoBehaviour{
             MeshCollider meshCollider = other.GetComponent<MeshCollider>();
             if (meshCollider == null)
             {
-                Debug.LogWarning($"[ParticlesController] {other.name} needs a MeshCollider for UV painting.");
                 return;
             }
 
@@ -72,13 +71,6 @@ public class ParticlesController: MonoBehaviour{
 
                     PaintManager.instance.paint(p, uv, radius, hardness, strength, paintColor);
                 }
-                else
-                {
-                    Debug.LogWarning($"Raycast failed. hitPoint={hitPoint}, vel={ev.velocity}, normal={ev.normal}");
-                }
-                    //Vector3 pos = collisionEvents[i].intersection;
-                    //float radius = Random.Range(minRadius, maxRadius);
-                    //PaintManager.instance.paint(p, pos, radius, hardness, strength, paintColor);
             }
         }
     }
