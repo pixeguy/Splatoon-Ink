@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: PaintableWall
-  m_Shader: {fileID: -6465566751694194690, guid: d720082e5b71004498653db605c207b2, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: 1343eb74efbf24d47bd1e8c39908f339, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -35,8 +35,20 @@ Material:
         m_Texture: {fileID: 2800000, guid: 7cf1055f41270dc40a64af16ab1186aa, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - Texture2D_51c58d0cbc82455ba59655b561f374ee:
+        m_Texture: {fileID: 2800000, guid: 90fa52e833fedfb4b8b3dbe10e96a30e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - Texture2D_8c24330cc18745a7a5da139b84d2aa3e:
+        m_Texture: {fileID: 2800000, guid: 7f7b302eddb0edd49afe4248035a7b56, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - Texture2D_9b6a369b9e8747268b99217d44bc2166:
         m_Texture: {fileID: 2800000, guid: 35add2fc28f438c4da2c9a3a720ac55e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _CleanedArea:
+        m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MaskTexture:
