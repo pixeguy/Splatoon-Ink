@@ -659,7 +659,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh28260
+  m_Name: pb_Mesh37846
   serializedVersion: 10
   m_SubMeshes:
   - serializedVersion: 2
@@ -6923,8 +6923,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 767330673}
   m_LocalRotation: {x: -0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -4.88, y: 0, z: 5.47}
-  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_LocalPosition: {x: -2.64, y: 5.35, z: 5.47}
+  m_LocalScale: {x: 1.04, y: 1.04, z: 1.04}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 10
@@ -6942,12 +6942,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cleanedAreaMask: {fileID: 0}
-  cleanedArea: {fileID: 0}
   rend: {fileID: 0}
   brushMaterial: {fileID: 2100000, guid: 50ee09d3cded9fd4da3beb1f68ff6105, type: 2}
   percentClean: 0
   percentChecked: 0
   Cleaned: 0
+  brushSize: 0.05
+  brushStrength: 1
+  gridResolution: 128
 --- !u!1001 &792744183
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -28591,12 +28593,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cleanedAreaMask: {fileID: 0}
-  cleanedArea: {fileID: 0}
   rend: {fileID: 0}
   brushMaterial: {fileID: 2100000, guid: 50ee09d3cded9fd4da3beb1f68ff6105, type: 2}
   percentClean: 0
   percentChecked: 0
   Cleaned: 0
+  brushSize: 0.05
+  brushStrength: 1
+  gridResolution: 128
 --- !u!64 &1819890075
 MeshCollider:
   m_ObjectHideFlags: 0
